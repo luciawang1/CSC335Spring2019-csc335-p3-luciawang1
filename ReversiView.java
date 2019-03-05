@@ -8,8 +8,9 @@ public class ReversiView {
 
 	public ReversiView(ReversiModel model) {
 		model = new ReversiModel();
-		input = new Scanner(System.in);
 		controller = new ReversiController(model);
+		input = new Scanner(System.in);
+
 	}
 
 	public void startGame() {
@@ -25,14 +26,6 @@ public class ReversiView {
 		System.out.println();
 	}
 
-	public void askQuestion() {
-		System.out.println("Where would you like to place your token?");
-	}
-
-	public void computerMove() {
-		System.out.println("The computer places a piece at ");
-	}
-
 	public void endGame() {
 		if (controller.getWScore() > controller.getBScore()) {
 			System.out.println("You win!");
@@ -43,63 +36,113 @@ public class ReversiView {
 		}
 	}
 
-	public int getCol() throws IllegalInputException {
-		char col = '0';
-		col = (char) Integer.parseInt(input.toString().substring(0, 1));
-		return convertColToInt(col);
-	}
-
-	public int convertColToInt(char col) {
-		if (col == 'a')
+	public int convertColToInt(String col) {
+		if (col.equals("a"))
 			return 0;
-		else if (col == 'b')
+		else if (col.equals("b"))
 			return 1;
-		else if (col == 'c')
+		else if (col.equals("c"))
 			return 2;
-		else if (col == 'd')
+		else if (col.equals("d"))
 			return 3;
-		else if (col == 'e')
+		else if (col.equals("e"))
 			return 4;
-		else if (col == 'f')
+		else if (col.equals("f"))
 			return 5;
-		else if (col == 'g')
+		else if (col.equals("g"))
 			return 6;
-		else if (col == 'h')
+		else if (col.equals("h"))
 			return 7;
 		else
 			return -1;
 
 	}
 
-	public int getRow() {
-		char row = 0;
-		try {
-			row = (char) Integer.parseInt(input.toString().substring(1, 2));
-			if (0 <= row || row <= 7) {
-				throw new IllegalInputException();
+	public void gameOver() {
+		if (controller.gameOver()) {
+			System.out.println("Game Over");
+			System.out.println("The final score is: " + controller.getBScore() + ":" + controller.getWScore());
+			if (controller.getBScore() > controller.getWScore()) {
+				System.out.println("You win!");
+			} else if (controller.getWScore() > controller.getBScore()) {
+				System.out.println("You lose.");
+			} else {
+				System.out.println("It's a tie.");
 			}
-		} catch (IllegalInputException e) {
-			System.out.println("enter a letter a-h followed by a number 1-8");
+			System.out.println("Would you liked to play again?");
+			while (input.nextLine().toLowerCase() != "no") {
+				play();
+			}
 		}
-		return row;
 	}
 
 	public void play() {
-		String input = "";
-		int row = getRow();
-		int col = getCol();
-		if (col == -1) {
-			try {
-				throw new IllegalInputException("Number has to be between 1 and 7");
-			} catch (IllegalInputException e) {
-				// TODO Auto-generated catch block
-				System.out.println("Enter new number");
+		boolean yourTurn = true;
+		while (!controller.gameOver()) {
+			if (yourTurn) {
+				// System.out.print(controller.getBScore());
+				// System.out.print(controller.bScore);
+				// System.out.print(controller.bScore);
+				// System.out.print(controller.bScore);
+
+				controller.printScore();
+				System.out.println("Where do you want to place your token?");
+				// System.out.print(controller.bScore);
+				String location = input.nextLine();
+				int row = Integer.parseInt(location.toString().substring(1, 2)) - 1;
+				if (row > 7 || row < 0)
+					row = -1;
+				int col = convertColToInt(location.toString().substring(0, 1));
+				while (row == -1 || col == -1) {
+					System.out.println("Please enter a character a-h followed by a number 0-7.");
+					location = input.nextLine();
+				}
+				while (controller.humanTurn(row, col) == false) {
+					System.out.println("Invalid move. Please try again.");
+					location = input.nextLine();
+					row = Integer.parseInt(location.toString().substring(1, 2)) - 1;
+					col = convertColToInt(location.toString().substring(0, 1));
+
+				}
+
+				if (controller.humanTurn(row, col)) {
+					displayBoard();
+					yourTurn = !yourTurn;
+				}
+
+				this.displayBoard();
+				yourTurn = !yourTurn;
+
+			}
+			if (!yourTurn) {
+				controller.printScore();
+				controller.cpuTurn();
+				this.displayBoard();
+				int cRow = controller.cpuRow + 1;
+				String cCol = intToString(controller.cpuCol);
+				System.out.println("computer places a piece at " + cCol + cRow);
+				yourTurn = !yourTurn;
 			}
 		}
-
-		controller.humanTurn(2, 6);
-		controller.cpuTurn();
-
 	}
 
+	private String intToString(int i) {
+		if (i == 0)
+			return "a";
+		if (i == 1)
+			return "b";
+		if (i == 2)
+			return "c";
+		if (i == 3)
+			return "d";
+		if (i == 4)
+			return "e";
+		if (i == 5)
+			return "f";
+		if (i == 6)
+			return "g";
+		else
+			return "h";
+
+	}
 }

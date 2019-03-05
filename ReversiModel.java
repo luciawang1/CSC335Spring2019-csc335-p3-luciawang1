@@ -1,8 +1,6 @@
 
 public class ReversiModel {
 
-	private int bScore;
-	private int wScore;
 	private String black = "B";
 	private String white = "W";
 	public int DIMENSION = 8;
@@ -14,7 +12,7 @@ public class ReversiModel {
 			for (int j = 0; j < DIMENSION; j++) {
 				board[i][j] = "_";
 			}
-			//System.out.println();
+			// System.out.println();
 		}
 		board[3][3] = white;
 		board[3][4] = black;
@@ -22,4 +20,11 @@ public class ReversiModel {
 		board[4][4] = white;
 	}
 
+	public String getBlack() {
+		return "B";
+	}
+
+	public String getWhite() {
+		return "W";
+	}
 }

@@ -1,20 +1,45 @@
-import java.awt.List;
-import java.util.ArrayList;
-import java.util.Map.Entry;
 
+/**
+ * @author Lucia Wang In MVC: Controller handles how the game works, such as
+ *         what places on the board are valid or not valid, and whose turn it is
+ */
 public class ReversiController {
 
 	public ReversiModel model;
-	private String BLANK = "_";
+	public int bScore;
+	public int wScore;
+	String[][] board;
+	int dimension;
+	public String human = "W";
+	public String cpu = "B";
+	public String BLANK = "_";
 
+	/**
+	 * Constructor
+	 * 
+	 * @param ReversiModel model
+	 */
 	public ReversiController(ReversiModel model) {
 		this.model = model;
+		this.board = model.board;
+		this.dimension = model.DIMENSION;
+		bScore = 0;
+		wScore = 0;
+
 	}
 
+	/**
+	 * Determines if the game is over
+	 * 
+	 * Game is over when cpuTurn and humanTurn are both false, or when there are no
+	 * more blank spaces on the board
+	 * 
+	 * @return true/false;
+	 */
 	public boolean gameOver() {
-		for (int r = 0; r < model.DIMENSION; r++) {
-			for (int c = 0; c < model.DIMENSION; c++) {
-				if (model.board[r][c] == "_") {
+		for (int r = 0; r < dimension; r++) {
+			for (int c = 0; c < dimension; c++) {
+				if (board[r][c] == "_") {
 					return false;
 				}
 			}
@@ -22,6 +47,11 @@ public class ReversiController {
 		return true;
 	}
 
+	/**
+	 * Returns physical representation of board as String
+	 * 
+	 * @return String board
+	 */
 	public String toString() {
 		String s = "";
 		for (int i = 0; i < model.DIMENSION; i++) {
@@ -35,276 +65,673 @@ public class ReversiController {
 		return s;
 	}
 
+	/**
+	 * Returns score of W(white)
+	 * 
+	 * @return int score
+	 */
 	public int getWScore() {
-		int count = 0;
+		wScore = 0;
 		for (int i = 0; i < model.DIMENSION; i++) {
 			for (int j = 0; j < model.DIMENSION; j++) {
 				if (model.board[i][j] == "W") {
-					count += 1;
+					wScore += 1;
 				}
 			}
 		}
-		return count;
+		return wScore;
 
 	}
 
+	/**
+	 * Returns the number of squares occupied by b
+	 * 
+	 * @return int score
+	 */
 	public int getBScore() {
-		int count = 0;
+		bScore = 0;
 		for (int i = 0; i < model.DIMENSION; i++) {
 			for (int j = 0; j < model.DIMENSION; j++) {
 				if (model.board[i][j] == "B") {
-					count += 1;
-				}
-			}
-		}
-		return count;
-	}
-
-	public void printScore() {
-		System.out.println();
-		System.out.println("The score is " + getWScore() + ":" + getBScore() + ".");
-	}
-
-	public void humanTurn(int r, int c) {
-		move("W", r, c);
-	}
-
-	public java.util.List<Entry<Integer, Integer>> getValidMoves(String color) {
-		// Returns a list of [x,y] lists of valid moves for the given player on the
-		// given board.
-		java.util.List<java.util.Map.Entry<Integer, Integer>> validMoves = new java.util.ArrayList<>();
-		for (int x = 0; x < 8; x++) {
-			for (int y = 0; y < 8; y++) {
-				if (isValidMove(color, x, y)) {
-					java.util.Map.Entry<Integer, Integer> pair = new java.util.AbstractMap.SimpleEntry<>(x, y);
-					validMoves.add(pair);
-				}
-			}
-		}
-		return validMoves;
-	}
-
-	private boolean isValidMove(String color, int r, int c) {
-		// TODO Auto-generated method stub
-		return ((model.board[r][c] == "_") && (r >= 0 && r <= 7) && (c >= 0 && c <= 7));
-	}
-
-	public void cpuTurn() {
-		// Given a board and the computer's tile, determine where t
-		// move and return that move as a [x, y] list.
-		java.util.List<Entry<Integer, Integer>> possibleMoves = getValidMoves("B");
-		Entry<Integer, Integer> bestMove = null;
-		int bestScore = -1;
-		for (Entry<Integer, Integer> move : possibleMoves) {
-			ReversiModel m = new ReversiModel();
-			m.board = model.board;
-			int score = scoreOfBoard(m);
-			if (score > bestScore) {
-				bestScore = score;
-				bestMove = move;
-			}
-		}
-		model.board[bestMove.getKey()][bestMove.getValue()] = "B";
-	}
-
-	// b1 w2
-	public int scoreOfBoard(ReversiModel m) {
-		int bScore = 0;
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
-				if (m.board[i][j] == "B")
 					bScore += 1;
+				}
 			}
 		}
 		return bScore;
 	}
 
-	public void move(String color, int r, int c) {
-		// Check if spot is full
-		String oppColor = "";
-		if (color == "B")
-			oppColor = "W";
-		if (color == "W")
-			oppColor = "B";
-		if (model.board[r][c] != "_") {
-			System.exit(1);
-		}
-		if (!isValidMove(color, r, c)) {
-			System.exit(1);
-		}
-		// Check if move is Valid...
+	/**
+	 * Actually prints out the board
+	 */
+	public void printScore() {
+		System.out.println();
+		System.out.println("The score is " + getWScore() + ":" + getBScore() + ".");
+	}
 
-		// Check Right Horizontal
-		if (c < 6 && model.board[r][c + 1] != "_" && model.board[r][c + 1] == oppColor) {
-			for (int pos = c + 2; pos < 8; pos++) {
-				if (model.board[r][pos] == "_") {
-					break;
-				}
-			}
-			for (int pos = c + 2; pos < 8; pos++) {
+	/**
+	 * Represents a human playing the game
+	 * 
+	 * Checks all 8 directions of the board for valid moves, and updates the board
+	 * based on which of those directions are valid directions
+	 * 
+	 * @param r represents the row
+	 * @param c represents column
+	 * @return true if the move is valid, false if it is not
+	 */
+	public boolean humanTurn(int r, int c) {
+		String player = "W";
+		String opp = "B";
+		boolean turn = false;
 
-				if (model.board[r][pos] == color) {
-					fill(color, r, c, r, pos);
-				}
-			}
+		// check and update all 8 directions
+		// left
+		if (checkLeft(player, opp, r, c)) {
+			updateLeft(player, opp, r, c);
+			turn = true;
 		}
-
-		// Check Left Horizontal
-		if (c > 1 && model.board[r][c - 1] != "_" && model.board[r][c - 1] == oppColor) {
-			for (int pos = c - 2; pos > -1; pos--) {
-				if (model.board[r][pos] == "_") {
-					break;
-				}
-			}
-			for (int pos = c - 2; pos > -1; pos--) {
-				if (model.board[r][pos] == color) {
-					fill(color, r, pos, r, c);
-				}
-			}
+		// right
+		if (checkRight(player, opp, r, c)) {
+			updateRight(player, opp, r, c);
+			turn = true;
 		}
-
-		// Check Bottom Vertical
-		if (r < 6 && model.board[r + 1][c] != "_" && model.board[r + 1][c] == oppColor) {
-			for (int pos = r + 2; pos < 8; pos++) {
-				if (model.board[pos][c] == "_") {
-					break;
-				}
-			}
-			for (int p = r + 2; p < 8; p++) {
-				if (model.board[p][c] == color) {
-					fill(color, r, c, p, c);
-				}
-			}
+		// up
+		if (checkUp(player, opp, r, c)) {
+			System.out.println("r=" + r + ", c=" + c);
+			updateUp(player, opp, r, c);
+			turn = true;
 		}
-
-		// Check Top Vertical
-		if (r > 1 && model.board[r - 1][c] != "_" && model.board[r - 1][c] == oppColor) {
-			for (int pos = r - 2; pos > -1; pos--) {
-				if (model.board[pos][c] == "_") {
-					break;
-				}
-			}
-			for (int p = r - 2; p > -1; p--) {
-				if (model.board[p][c] == color) {
-					fill(color, p, c, r, c);
-				}
-			}
-
+		// down
+		if (checkDown(player, opp, r, c)) {
+			updateDown(player, opp, r, c);
+			turn = true;
 		}
-
-		// Check Upper Right Diagonal
-		if ((r > 1 && c < 6) && (model.board[r - 1][c + 1] != BLANK) && (model.board[r - 1][c + 1] == oppColor)) {
-			int r1 = r - 2;
-			int c1 = c + 2;
-			while (r1 > -1 && c1 < 8) {
-				if (model.board[r1][c1] == BLANK) {
-					r--;
-					c1++;
-					break;
-				}
-			}
-			int r2 = r - 2;
-			int c2 = c + 2;
-			while (r2 > -1 && c2 < 8) {
-				if (model.board[r2][c2] == color) {
-					fill(color, r - 2, c + 2, r2, c2);
-				}
-				r2++;
-				c2--;
-			}
+		// bottom right
+		if (checkBottomRight(player, opp, r, c)) {
+			updateBottomRight(player, opp, r, c);
+			turn = true;
 		}
-
-		// Check Upper Left Diagonal
-		if ((r > 1 && c > 1) && (model.board[r - 1][c - 1] != BLANK) && (model.board[r - 1][c - 1] == oppColor)) {
-			int i1 = r - 2;
-			int j1 = c - 2;
-			while (i1 > -1 && j1 > -1) {
-				if (model.board[i1][j1] == BLANK) {
-					j1--;
-					i1--;
-					break;
-				}
-			}
-			int i2 = r - 2;
-			int j2 = c - 2;
-			while (i2 > -1 && j2 > -1) {
-				if (model.board[i2][j2] == color) {
-					fill(color, r - 2, c - 2, i2, j2);
-				}
-				i2--;
-				j2--;
-			}
+		// upper left
+		if (checkUpperLeft(player, opp, r, c)) {
+			updateUpperLeft(player, opp, r, c);
+			turn = true;
 		}
-
-		// Check Lower Left Diagonal
-		if ((r < 6 && c > 1) && (model.board[r + 1][c - 1] != BLANK) && (model.board[r + 1][c - 1] == oppColor)) {
-			int r1 = r + 2;
-			int c1 = c - 2;
-			while (r1 < 8 && c1 > -1) {
-				if (model.board[r1][c1] == BLANK) {
-					c1++;
-					r1--;
-					break;
-				}
-			}
-			int r2 = r + 2;
-			int c2 = c - 2;
-			while (r2 < 8 && c2 > -1) {
-				if (model.board[r2][c2] == color) {
-					fill(color, r + 2, c - 2, r2, c2);
-				}
-				r2++;
-				c2--;
-			}
+		// lower left
+		if (checkLowerLeft(player, opp, r, c)) {
+			updateLowerLeft(player, opp, r, c);
+			turn = true;
 		}
-		// Check Lower Right Diagonal
-		if ((r < 6 && c < 6) && (model.board[r + 1][c + 1] != BLANK) && (model.board[r + 1][c + 1] == oppColor)) {
-			int r1 = r + 2;
-			int c1 = c + 2;
-			while (r1 < 8 && c1 < 8) {
-				if (model.board[r1][c1] == BLANK) {
-					c1++;
-					r1++;
-					break;
-				}
+		// upper right
+		if (checkUpperRight(player, opp, r, c)) {
+			updateUpperRight(player, opp, r, c);
+			turn = true;
+		}
+		return turn;
+	}
+
+	// rows/columns to flip the colors to
+	private int up = -1;
+	private int down = -1;
+	private int left = -1;
+	private int right = -1;
+	private int upperLeftCol = -1;
+	private int upperLeftRow = -1;
+	private int lowerRightRow = -1;
+	private int lowerRightCol = -1;
+	private int lowerLeftRow = -1;
+	private int lowerLeftCol = -1;
+	private int upperRightRow = -1;
+	private int upperRightCol = -1;
+
+	// decrease col
+	/**
+	 * Checks if items on the left of the current row and column make the move valid
+	 * 
+	 * the move is valid only if the left piece is the opponent and there is one
+	 * even further left that is the player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the left, false
+	 *         otherwise
+	 */
+	private boolean checkLeft(String player, String opp, int r, int c) {
+		if (!isValidMove(r, c))
+			return false;
+		c = c - 1;
+		if (c >= 0 && board[r][c] != opp)
+			return false;
+		c = c - 1;
+		while (c >= 0 && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				left = c + 1;
+				return true;
 			}
-			int r2 = r + 2;
-			int c2 = c + 2;
-			while (r2 < 8 && c2 < 8) {
-				if (model.board[r2][c2] == color) {
-					fill(color, r + 2, c + 2, r2, c2);
-					r2++;
-					c2++;
-				}
-			}
+			c -= 1;
+		}
+		return false;
+	}
+
+	/**
+	 * precondition: checkLeft returns true Updates the board after checkLeft
+	 * returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones to the left that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the left, false
+	 *         otherwise
+	 */
+	private void updateLeft(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (left < c) {
+			board[r][left] = player;
+			left += 1;
 		}
 	}
 
-	public void setColor(String color, int r, int c) {
-		model.board[r][c] = color;
+	// increase col
+	/**
+	 * Checks if items on the right of the current row and column make the move
+	 * valid
+	 * 
+	 * the move is valid only if the right piece is the opponent and there is one
+	 * even further right that is the player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the right, false
+	 *         otherwise
+	 */
+	private boolean checkRight(String player, String opp, int r, int c) {
+		if (!isValidMove(r, c))
+			return false;
+		c = c + 1;
+		if (c < dimension && board[r][c] != opp)
+			return false;
+		c = c + 1;
+		while (c < dimension && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				right = c;
+				return true;
+			}
+			c += 1;
+		}
+		return false;
 	}
 
-	private void fill(String color, int r1, int c1, int r2, int c2) {
+	/**
+	 * precondition: checkRight returns true
+	 * 
+	 * Updates the board after checkRight returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones to the left that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the right, false
+	 *         otherwise
+	 */
+	private void updateRight(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (c < right) {
+			board[r][c] = player;
+			c += 1;
+		}
+	}
 
-		// Horizontal Filling
-		if (r1 == r2) {
-			for (int pos = Math.min(c1, c2); pos <= Math.max(c1, c2); pos++) {
-				model.board[r1][pos] = color;
+	// decrease row
+	/**
+	 * Checks if items above current row and column make the move valid
+	 * 
+	 * the move is valid only if the piece above is the opponent and there is one
+	 * even further up that is the player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces above it, false
+	 *         otherwise
+	 */
+	private boolean checkUp(String player, String opp, int r, int c) {
+
+		if (!isValidMove(r, c))
+			return false;
+		r = r - 1;
+		if (r >= 0 && board[r][c] != opp)
+			return false;
+		r = r - 1;
+		while (r >= 0 && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				up = r;
+				return true;
 			}
+			r -= 1;
 		}
-		// vertical filling
-		if (c1 == c2) {
-			for (int pos = Math.min(r1, r2); pos <= Math.max(r1, r2); pos++) {
-				model.board[pos][c1] = color;
+		return false;
+	}
+
+	/**
+	 * precondition: checkUp returns true
+	 * 
+	 * Updates the board after checkUp returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones above that that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces above it, false
+	 *         otherwise
+	 */
+	private void updateUp(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (up < r) {
+			board[up][c] = player;
+			up++;
+		}
+	}
+
+	// increaseRow
+	/**
+	 * Checks if items below the current row and column make the move valid
+	 * 
+	 * the move is valid only if the piece below is the opponent and there is one
+	 * even further underneath that is the player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces below it, false
+	 *         otherwise
+	 */
+	private boolean checkDown(String player, String opp, int r, int c) {
+		if (!isValidMove(r, c))
+			return false;
+		r = r + 1;
+		if (r < dimension && board[r][c] != opp)
+			return false;
+		r = r + 1;
+		while (r < dimension && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				down = r;
+				return true;
 			}
+			r += 1;
 		}
-		// diagonal filling
-		else {
-			for (int i = Math.min(r1, r2); i < Math.max(r1, r2); i++) {
-				for (int j = Math.min(c1, c2); j < Math.max(c1, c2); j++) {
-					model.board[i][j] = color;
+		return false;
+	}
+
+	/**
+	 * precondition: checkDowns returns true
+	 * 
+	 * Updates the board after checkDown returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones below it that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the left, false
+	 *         otherwise
+	 */
+	private void updateDown(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (r < down) {
+			board[r][c] = player;
+			r++;
+		}
+	}
+
+	// increaseRow increaseCol
+	/**
+	 * Checks if items to the bottom right of the current row and column make the
+	 * move valid
+	 * 
+	 * the move is valid only if the piece right below and to the right is the
+	 * opponent and there is one even further below and to the right that is the
+	 * player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the bottom right ,
+	 *         false otherwise
+	 */
+	private boolean checkBottomRight(String player, String opp, int r, int c) {
+		if (!isValidMove(r, c))
+			return false;
+		r += 1;
+		c += 1;
+		if (r < dimension && c < dimension && board[r][c] != opp) {
+			return false;
+		}
+		r += 1;
+		c += 1;
+		while (r < dimension && c < dimension && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				lowerRightRow = r;
+				lowerRightCol = c;
+				return true;
+			}
+			r += 1;
+			c += 1;
+		}
+		return false;
+	}
+
+	/**
+	 * precondition: checkBottomRight returns true
+	 * 
+	 * Updates the board after checkLeft returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones to the bottom right of it that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the bottom right,
+	 *         false otherwise
+	 */
+	private void updateBottomRight(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (r < lowerRightRow && c < lowerRightCol) {
+			board[r][c] = player;
+			r++;
+			c++;
+		}
+	}
+
+	// decreaseRow decreaseCol
+	// increaseRow increaseCol
+	/**
+	 * Checks if items to the upper left of the current row and column make the move
+	 * valid
+	 * 
+	 * the move is valid only if the piece right above and to the left is the
+	 * opponent and there is one even further above and to the left that is the
+	 * player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the lower left,
+	 *         false otherwise
+	 */
+	private boolean checkUpperLeft(String player, String opp, int r, int c) {
+		if (!isValidMove(r, c))
+			return false;
+		r -= 1;
+		c -= 1;
+		if (c >= 0 && r >= 0 && board[r][c] != opp)
+			return false;
+		r -= 1;
+		c -= 1;
+		while (r >= 0 && c >= 0 && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				upperLeftRow = r;
+				upperLeftCol = c;
+				return true;
+			}
+			r -= 1;
+			c -= 1;
+		}
+		return false;
+	}
+
+	/**
+	 * precondition: checkUpperLeft returns true
+	 * 
+	 * Updates the board after checkLeft returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones to the Top left that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the upper left,
+	 *         false otherwise
+	 */
+	private void updateUpperLeft(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (upperLeftRow < r && upperLeftCol < c) {
+			board[upperLeftRow][upperLeftCol] = player;
+			upperLeftRow++;
+			upperLeftCol++;
+		}
+	}
+
+	// increaseRow decreaseCol
+	// increaseRow increaseCol
+	/**
+	 * Checks if items to the lower left of the current row and column make the move
+	 * valid
+	 * 
+	 * the move is valid only if the piece right below and to the left is the
+	 * opponent and there is one even further below and to the zzz that is the
+	 * player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the bottom right ,
+	 *         false otherwise
+	 */
+	private boolean checkLowerLeft(String player, String opp, int r, int c) {
+
+		if (!isValidMove(r, c))
+			return false;
+		r += 1;
+		c -= 1;
+
+		if (r < dimension && c >= 0 && board[r][c] != opp)
+			return false;
+		r += 1;
+		c -= 1;
+		while (r < dimension && c >= 0 && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				lowerLeftRow = r;
+				lowerLeftCol = c;
+				return true;
+			}
+			r += 1;
+			c -= 1;
+		}
+		return false;
+	}
+
+	/**
+	 * precondition: checkLowerLeft returns true
+	 * 
+	 * Updates the board after checkLowerLeft returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones to the lower left that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the lower left,
+	 *         false otherwise
+	 */
+	private void updateLowerLeft(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (r < lowerLeftRow && lowerLeftCol < c) {
+			board[r][lowerLeftCol] = player;
+			r++;
+			lowerLeftCol++;
+		}
+	}
+
+	// decreaseRow increaseCol
+	/**
+	 * Checks if items to the upper right of the current row and column make the
+	 * move valid
+	 * 
+	 * the move is valid only if the piece right above and to the right is the
+	 * opponent and there is one even further above and to the right that is the
+	 * player, with no blank spaces in between
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the lower right,
+	 *         false otherwise
+	 */
+
+	private boolean checkUpperRight(String player, String opp, int r, int c) {
+		if (!isValidMove(r, c))
+			return false;
+		r -= 1;
+		c += 1;
+		if (c < dimension && r >= 0 && board[r][c] != opp)
+			return false;
+		r -= 1;
+		c += 1;
+		while (r >= 0 && c < dimension && board[r][c] != BLANK) {
+			if (board[r][c] == player) {
+				upperRightRow = r;
+				upperRightCol = c;
+				return true;
+			}
+			r -= 1;
+			c += 1;
+		}
+		return false;
+	}
+
+	/**
+	 * precondition: checkUpperRight returns true
+	 * 
+	 * Updates the board after checkUpperRight returns true
+	 * 
+	 * This means the player will now occupy the row and column, and all the other
+	 * ones to the upper right that count
+	 * 
+	 * @param String player is the current player
+	 * @param String opp is the opponent
+	 * @param        int r is the current row
+	 * @param        int c is the current col
+	 * 
+	 * @return true if the move is valid based on the pieces to the upper right,
+	 *         false otherwise
+	 */
+	private void updateUpperRight(String player, String opp, int r, int c) {
+		board[r][c] = player;
+		while (upperRightRow < r && c < upperRightCol) {
+			board[upperRightRow][upperRightCol] = player;
+			upperRightRow++;
+			upperRightCol--;
+		}
+	}
+
+	/**
+	 * Determines if the move at a given row and columns is valid or not
+	 * 
+	 * The move is valid if row and columns are between 0 and 7 inclusive, and the
+	 * board at row and column is a blank space
+	 * 
+	 * @param int row is the row of the board
+	 * @param int col is the col of the board
+	 * 
+	 * @return boolean true if the move is valid, false otherwise
+	 * @return true if the move is valid based on the pieces to the lower left,
+	 *         false otherwise
+	 */
+	private boolean isValidMove(int r, int c) {
+		return (((r >= 0 && r <= 7) && (c >= 0 && c <= 7) && model.board[r][c] == "_"));
+	}
+
+	public int cpuRow;
+	public int cpuCol;
+
+	public boolean cpuTurn() {
+		for (int r = 0; r < dimension; r++) {
+			for (int c = 0; c < dimension; c++) {
+				if (this.checkLeft(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					this.updateLeft(cpu, human, r, c);
+					return true;
+				} else if (this.checkUp(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					this.updateUp(cpu, human, r, c);
+					return true;
+				} else if (this.checkBottomRight(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					this.updateBottomRight(cpu, human, r, c);
+					return true;
+				} else if (this.checkDown(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					this.updateDown(cpu, human, r, c);
+					return true;
+				} else if (this.checkRight(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					this.updateRight(cpu, human, r, c);
+					return true;
+				} else if (this.checkLowerLeft(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					if (r == 0 && c == 4)
+						this.updateLowerLeft(cpu, human, r, c);
+					return true;
+				} else if (this.checkUpperLeft(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					this.updateUpperLeft(cpu, human, r, c);
+					return true;
+				} else if (this.checkUpperRight(cpu, human, r, c)) {
+					cpuRow = r;
+					cpuCol = c;
+					this.updateUpperRight(cpu, human, r, c);
+					return true;
 				}
 			}
 		}
+		return false;
 	}
 }
